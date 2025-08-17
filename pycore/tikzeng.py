@@ -21,6 +21,8 @@ def to_cor():
 \def\FcReluColor{rgb:blue,5;red,5;white,4}
 \def\SoftmaxColor{rgb:magenta,5;black,7}   
 \def\SumColor{rgb:blue,5;green,15}
+\def\HashEncColor{rgb:blue,5;green,15}
+
 """
 
 def to_begin():
@@ -68,6 +70,23 @@ def to_ConvConvRelu( name, s_filer=256, n_filer=(64,64), offset="(0,0,0)", to="(
         xlabel={{ """+ str(n_filer[0]) +""", """+ str(n_filer[1]) +""" }},
         zlabel="""+ str(s_filer) +""",
         fill=\ConvColor,
+        bandfill=\ConvReluColor,
+        height="""+ str(height) +""",
+        width={ """+ str(width[0]) +""" , """+ str(width[1]) +""" },
+        depth="""+ str(depth) +"""
+        }
+    };
+"""
+
+def to_HashEnc( name, s_filer=256, n_filer=(64,64), offset="(0,0,0)", to="(0,0,0)", width=(2,2), height=40, depth=40, caption=" " ):
+    return r"""
+\pic[shift={ """+ offset +""" }] at """+ to +""" 
+    {RightBandedBox={
+        name="""+ name +""",
+        caption="""+ caption +""",
+        xlabel={{ """+ str(n_filer[0]) +""", """+ str(n_filer[1]) +""" }},
+        zlabel="""+ str(s_filer) +""",
+        fill=\HashEncColor,
         bandfill=\ConvReluColor,
         height="""+ str(height) +""",
         width={ """+ str(width[0]) +""" , """+ str(width[1]) +""" },
