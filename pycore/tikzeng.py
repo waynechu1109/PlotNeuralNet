@@ -37,9 +37,24 @@ def to_begin():
 
 # layers definition
 
-def to_input( pathfile, to='(-3,0,0)', width=8, height=8, name="temp" ):
+def to_input( pathfile, to='(-3,0,0)', width=8, height=8, name="temp", flip=True ):
+    if flip:
+        include_cmd = r"\reflectbox{\includegraphics[width=" + str(width) + "cm,height=" + str(height) + "cm]{" + pathfile + "}}"
+    else:
+        include_cmd = r"\includegraphics[width=" + str(width) + "cm,height=" + str(height) + "cm]{" + pathfile + "}"
+    
     return r"""
-\node[canvas is zy plane at x=0] (""" + name + """) at """+ to +""" {\includegraphics[width="""+ str(width)+"cm"+""",height="""+ str(height)+"cm"+"""]{"""+ pathfile +"""}};
+\node[canvas is zy plane at x=0] (""" + name + """) at """+ to +""" {""" + include_cmd + """};
+"""
+
+def to_output_mesh(pathfile, to='(0,0,0)', width=8, height=8, name="temp", flip=False):
+    if flip:
+        include_cmd = r"\reflectbox{\includegraphics[width=" + str(width) + "cm,height=" + str(height) + "cm]{" + pathfile + "}}"
+    else:
+        include_cmd = r"\includegraphics[width=" + str(width) + "cm,height=" + str(height) + "cm]{" + pathfile + "}"
+
+    return r"""
+\node[anchor=center] (""" + name + """) at """ + to + """ {""" + include_cmd + """};
 """
 
 # Conv
@@ -78,19 +93,46 @@ def to_ConvConvRelu( name, s_filer=256, n_filer=(64,64), offset="(0,0,0)", to="(
     };
 """
 
-def to_HashEnc( name, s_filer=256, n_filer=(64,64), offset="(0,0,0)", to="(0,0,0)", width=(2,2), height=40, depth=40, caption=" " ):
+def to_HashEnc(
+    name,
+    s_filer=256,
+    n_filer=(64, 64, 64, 64, 64, 64, 64, 64, 64, 64),
+    offset="(0,0,0)",
+    to="(0,0,0)",
+    width=(2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
+    height=40,
+    depth=40,
+    caption=" "
+):
+    # --- 安全處理，確保有 10 個值 ---
+    # n_filer：每層的通道數標註
+    nf = list(n_filer) if isinstance(n_filer, (list, tuple)) else [n_filer]
+    if len(nf) < 10:
+        nf += [nf[-1]] * (10 - len(nf))   # 不足補最後一個值
+    nf = nf[:10]                           # 超過就截斷到 10
+
+    # width：每層方塊寬度
+    ww = list(width) if isinstance(width, (list, tuple)) else [width]
+    if len(ww) < 10:
+        ww += [ww[-1]] * (10 - len(ww))
+    ww = ww[:10]
+
+    # 組成 TikZ 需要的逗號分隔字串
+    xlabel_vals = ", ".join(str(x) for x in nf)
+    width_vals  = " , ".join(str(w) for w in ww)
+
     return r"""
-\pic[shift={ """+ offset +""" }] at """+ to +""" 
+\pic[shift={ """ + offset + """ }] at """ + to + r""" 
     {RightBandedBox={
-        name="""+ name +""",
-        caption="""+ caption +""",
-        xlabel={{ """+ str(n_filer[0]) +""", """+ str(n_filer[1]) +""" }},
-        zlabel="""+ str(s_filer) +""",
+        name=""" + name + r""",
+        caption=""" + caption + r""",
+        xlabel={ """ + xlabel_vals + r""" },
+        zlabel=""" + str(s_filer) + r""",
         fill=\HashEncColor,
         bandfill=\ConvReluColor,
-        height="""+ str(height) +""",
-        width={ """+ str(width[0]) +""" , """+ str(width[1]) +""" },
-        depth="""+ str(depth) +"""
+        height=""" + str(height) + r""",
+        width={ """ + width_vals + r""" },
+        depth=""" + str(depth) + r"""
         }
     };
 """

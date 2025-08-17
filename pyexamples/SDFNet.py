@@ -25,7 +25,7 @@ arch = [
         offset="(0,0,0)", to="(-8,0,0)",
         width=10, height=10, depth=10,
         opacity=0.5,
-        caption='Preprocess (VGGT or DUSt3R)'
+        caption="\\shortstack{Preprocess \\\\ (VGGT or DUSt3R)}"
     ),
     to_connection('img_in', 'preprocess'),
 
@@ -52,16 +52,16 @@ arch = [
 
     # ===== Encoder (HashGrid Encoding) =====
     to_HashEnc(
-        name='encoder', s_filer=1, n_filer=(32,32),
+        name='encoder', s_filer="", n_filer=("", "", "", "", "", "", "", "", "", ""),
         offset="(0.8,0,0)", to="(0,0,0)",
-        width=(2,2), height=25, depth=25,
+        width=(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5), height=25, depth=25,
         caption="Hash Encoder"
     ),
     to_connection('pcd_node_back', 'encoder'),
 
     # ===== GeoNet =====
     to_ConvConvRelu(
-        name='geo', s_filer=1, n_filer=(64,64),
+        name='geo', s_filer=3, n_filer=(16,16),
         offset="(3,3,0)", to="(encoder-east)",
         width=(2,2), height=15, depth=15,
         caption="GeoNet"
@@ -77,10 +77,10 @@ arch = [
     to_connection("geo", "sdf"),
 
     # ===== ColorNet =====
-    to_ConvConvRelu(
-        name='color', s_filer=1, n_filer=(64,64),
+    to_Conv(
+        name='color', s_filer=3, n_filer=16,
         offset="(3,-3,0)", to="(encoder-east)",
-        width=(2,2), height=15, depth=15,
+        width=2, height=15, depth=15,
         caption="ColorNet"
     ),
     to_connection("encoder", "color"),
@@ -92,6 +92,29 @@ arch = [
         caption="RGB(x)"
     ),
     to_connection("color", "rgb"),
+
+    # marching cubes
+    to_Pool(
+        name='marching_cubes',
+        offset="(3,3,0)", to="(rgb-east)",
+        width=10, height=10, depth=10,
+        opacity=0.5,
+        caption='Marching Cubes'
+    ),
+    to_connection("rgb", "marching_cubes"),
+    to_connection("sdf", "marching_cubes"),
+
+    # result block (create a tiny block to show the arrow)
+    to_Conv(
+        name='result', s_filer="", n_filer="",
+        offset="(3,0,0)", to="(marching_cubes-east)",
+        width=1e-4, height=1e-4, depth=1e-4,
+        caption=""
+    ),
+    to_connection("marching_cubes", "result"),
+    
+    # output mesh image
+    to_output_mesh('../SDFNet/dtu65_mesh_0.0_colored.png', to='(20,0,0)', width=8, height=8),
 
     # to_end 應該保持在最後
     to_end()
